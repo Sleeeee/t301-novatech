@@ -59,6 +59,11 @@ La Trusted Zone contient également plusieurs VLANs, mais un nombre moins import
 - DC-MT - VLAN 108 : 10.1.8.0/24
 - APP-MT - VLAN 112 : 10.1.12.0/24
 - BACKUP-MT - VLAN 116 : 10.1.16.0/24
+- NVR-MT - VLAN 120 : 10.1.20.0/24
+- DB_ECOM-MT - VLAN 124 : 10.1.24.0/24
+- DB_ERP-MT - VLAN 128 : 10.1.28.0/24
+- DB_CRM-MT - VLAN 132 : 10.1.32.0/24
+- RDS-MT - VLAN 136 : 10.1.36.0/24
 - MGM-MT - VLAN 196 : 10.1.96.0/24 (VLAN de gestion des équipements réseau et services internes, contenant les hyperviseurs Proxmox et les services de monitoring)
 
 Notons que la Trusted Zone contient des serveurs, et ces derniers sont parfois (souvents) redondants. De ce fait, nous avons adopté la convention de nommer les machines d'une VLAN en réservant, de manière officieuse, 16 adresses par type de service présent. Au sein d'une même VLAN, on pourra donc retrouver les machines SVU-TU-01 (.1), SVU-TU-02 (.2), SVU-TU-03 (.3), SVD-TU-03 (.16), SVT-TU-01 (.32), etc.

@@ -36,6 +36,9 @@ Les VLANs sont toutes nommées UUU-LZ, où :
 ### Services
 - API : APIs/backends du site d'ecommerce
 - BKP : machine de BacKuP
+- DBC : DataBase CRM
+- DBE : DataBase E-commerce
+- DBR : Database ERP
 - DCS : Domain Controller Server
 - DNS : Domain Name Server
 - ERP : Enterprise Resource Planning
@@ -45,6 +48,8 @@ Les VLANs sont toutes nommées UUU-LZ, où :
 - ISP : Internet Service Provider
 - JMP : serveur JuMP (ou rebond)
 - MON : serveur de MONitoring
+- NVR : Network Video Recorder
+- RDS : Recherche et Développement Sensible
 - RPS : Reverse Proxy Server
 - SL2 : Switch Layer 2
 - SL3 : Switch Layer 3
