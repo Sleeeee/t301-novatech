@@ -1,0 +1,238 @@
+SL2-PU-02#sh run
+Building configuration...
+
+Current configuration : 5974 bytes
+!
+! Last configuration change at 16:12:43 UTC Wed Dec 10 2025 by cisco
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+service compress-config
+!
+hostname SL2-PU-02
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$PDgD$5Dw3pfuVrdcy1yPF/fXjP/
+!
+username admin privilege 15 secret 5 $1$p7M4$qAME2n0LhjTqaAFpNinTn/
+username cisco privilege 15 secret 5 $1$As.x$EKq01qsuomYs4M8aUyAr//
+no aaa new-model
+!
+!         
+!
+!
+!
+no ip routing
+ip arp inspection vlan 1604,1608,1612,1620,1624,1676,1680,1684,1688,1696
+!
+!
+!
+ip dhcp snooping vlan 1604,1608,1612,1620,1624,1676,1680,1684,1688,1696
+ip dhcp snooping
+ip domain-name prod.novatech.lab
+no ip cef
+no ipv6 cef
+!
+!
+!
+spanning-tree mode pvst
+spanning-tree extend system-id
+!
+!
+vlan 1604
+ name ADMIN-PU
+!         
+vlan 1608
+ name IT-PU
+!
+vlan 1612
+ name RD-PU
+!
+vlan 1620
+ name PROD-PU
+!
+vlan 1624
+ name LOGI-PU
+!
+vlan 1676
+ name ASM-PU
+!
+vlan 1680
+ name ALARMES-PU
+!
+vlan 1684
+ name CAMERAS-PU
+!
+vlan 1688
+ name PRINTER-PU
+!
+vlan 1696
+ name MGM-PU
+no cdp run
+!
+! 
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0
+ description UPLINK-FIREWALL
+ switchport trunk allowed vlan 1604,1608,1612,1620,1624,1676,1680,1684,1688
+ switchport trunk allowed vlan add 1696,1699
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1699
+ switchport mode trunk
+ switchport nonegotiate
+ ip arp inspection trust
+ negotiation auto
+ ip dhcp snooping trust
+!
+interface GigabitEthernet0/1
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet0/2
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet0/3
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet1/0
+ description IT-PU
+ switchport access vlan 1608
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/1
+ description PROD-PU
+ switchport access vlan 1620
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/2
+ description ASM-PU
+ switchport access vlan 1676
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet1/3
+ description PRINTER-PU
+ switchport access vlan 1688
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet2/0
+ description CAMERAS-PU
+ switchport access vlan 1684
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!
+interface GigabitEthernet2/1
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet2/2
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet2/3
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet3/0
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet3/1
+ shutdown 
+ negotiation auto
+!
+interface GigabitEthernet3/2
+ shutdown
+ negotiation auto
+!
+interface GigabitEthernet3/3
+ description TRUNK-SW01
+ switchport trunk allowed vlan 1604,1608,1612,1620,1624,1676,1680,1684,1688
+ switchport trunk allowed vlan add 1696,1699
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 1699
+ switchport mode trunk
+ switchport nonegotiate
+ ip arp inspection trust
+ negotiation auto
+ ip dhcp snooping trust
+!
+interface Vlan1696
+ description MANAGEMENT
+ ip address 10.16.96.218 255.255.255.0
+!
+ip default-gateway 10.16.96.254
+ip forward-protocol nd
+!
+ip http server
+!
+ip ssh version 2
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+!
+!
+!
+!
+!
+control-plane
+!
+line con 0
+ exec-timeout 5 0
+ login local
+line aux 0
+line vty 0 4
+ exec-timeout 5 0
+ login local
+ transport input ssh
+!
+!
+end
+
+SL2-PU-02#
