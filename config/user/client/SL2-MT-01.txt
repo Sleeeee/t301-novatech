@@ -1,0 +1,258 @@
+Current configuration : 6370 bytes
+!
+! Last configuration change at 22:43:20 UTC Thu Dec 11 2025 by cisco
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+service compress-config
+!
+hostname SL2-MT-01
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$XEd1$zaS77D4j.5MBm6EvMV4MJ1
+!
+username cisco privilege 15 secret 5 $1$LLse$VmT5Q98CyvKwgKGxuYt3i/
+no aaa new-model
+!
+!
+!         
+!         
+!         
+ip arp inspection vlan 108,112,116,120,124,128,132,136
+!         
+!         
+!         
+ip dhcp snooping vlan 104,108,112,116,120,124,128,132,136
+no ip dhcp snooping information option
+ip dhcp snooping
+no ip domain-lookup
+ip domain-name mere.novatech.lab
+ip cef    
+no ipv6 cef
+!         
+!         
+!         
+spanning-tree mode pvst
+spanning-tree extend system-id
+!         
+no cdp run
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+interface GigabitEthernet0/0
+ description UPLINK-PFSENSE-EM1
+ switchport trunk allowed vlan 104,108,112,116,120,124,128,132,136,196,199
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 199
+ switchport mode trunk
+ switchport nonegotiate
+ ip arp inspection trust
+ negotiation auto
+ ip dhcp snooping trust
+!         
+interface GigabitEthernet0/1
+ description JMP-MT
+ switchport access vlan 104
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet0/2
+ negotiation auto
+!         
+interface GigabitEthernet0/3
+ negotiation auto
+!         
+interface GigabitEthernet1/0
+ negotiation auto
+!         
+interface GigabitEthernet1/1
+ description MGM-MT
+ switchport access vlan 196
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet1/2
+ description DC-MT
+ switchport access vlan 108
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+ ip dhcp snooping trust
+!         
+interface GigabitEthernet1/3
+ description APP-MT
+ switchport access vlan 112
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet2/0
+ description BACKUP-MT
+ switchport access vlan 116
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet2/1
+ description DB-ECOM-MT
+ switchport access vlan 124
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet2/2
+ description NVR-MT
+ switchport access vlan 120
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet2/3
+ description RDS-MT
+ switchport access vlan 136
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet3/0
+ description DB-CRM-MT
+ switchport access vlan 132
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet3/1
+ description DB-ERP-MT
+ switchport access vlan 128
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+ spanning-tree guard root
+!         
+interface GigabitEthernet3/2
+ shutdown 
+ negotiation auto
+!         
+interface GigabitEthernet3/3
+ shutdown 
+ negotiation auto
+!         
+interface Vlan196
+ description MANAGEMENT
+ ip address 10.1.96.219 255.255.255.0
+!         
+ip default-gateway 10.1.96.254
+ip forward-protocol nd
+!         
+ip http server
+!         
+ip ssh version 2
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!         
+!         
+!         
+arp access-list access-list
+ permit ip host 10.1.4.10 mac host 0242.1dde.6200 
+!         
+!         
+!         
+!         
+control-plane
+!         
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!         
+line con 0
+ exec-timeout 5 0
+ login local
+line aux 0
+line vty 0 4
+ exec-timeout 5 0
+ login local
+ transport input ssh
+!         
+!         
+end       
