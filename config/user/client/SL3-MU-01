@@ -1,0 +1,222 @@
+Current configuration : 5301 bytes
+!
+! Last configuration change at 22:39:40 UTC Thu Dec 11 2025 by cisco
+!
+version 15.6
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+!
+hostname SL3-MU-01
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$zDHN$O6RQ.8t1xy3vNSUFeAftv1
+!
+no aaa new-model
+ethernet lmi ce
+!
+!
+!
+mmi polling-interval 60
+no mmi auto-configure
+no mmi pvc
+mmi snmp-timeout 180
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+no ip domain lookup
+ip domain name mere.novatech.lab
+ip cef    
+no ipv6 cef
+!         
+multilink bundle-name authenticated
+!         
+!         
+!         
+!         
+username cisco privilege 15 secret 5 $1$cctn$MQurSJ3J37pBdpaLeGBgK.
+!         
+redundancy
+!         
+no cdp run
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+interface GigabitEthernet0/0
+ description UPLINK-PFSENSE-EM1
+ no ip address
+ duplex auto
+ speed auto
+ media-type rj45
+!         
+interface GigabitEthernet0/0.96
+ description MANAGEMENT
+ encapsulation dot1Q 96
+ ip address 10.0.96.252 255.255.255.0
+!         
+interface GigabitEthernet0/1
+ description TRUNK-SW-01-MAIN
+ no ip address
+ duplex auto
+ speed auto
+ media-type rj45
+!         
+interface GigabitEthernet0/1.4
+ description GATEWAY-ADMIN-MU
+ encapsulation dot1Q 4
+ ip address 10.0.4.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/1.8
+ description GATEWAY-IT-MU
+ encapsulation dot1Q 8
+ ip address 10.0.8.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/1.12
+ description GATEWAY-RD-MU
+ encapsulation dot1Q 12
+ ip address 10.0.12.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/1.16
+ description GATEWAY-MARKET-MU
+ encapsulation dot1Q 16
+ ip address 10.0.16.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/1.80
+ description GATEWAY-ALARME-MU
+ encapsulation dot1Q 80
+ ip address 10.0.80.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/1.84
+ description GATEWAY-CAMERA-MU
+ encapsulation dot1Q 84
+ ip address 10.0.84.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/1.92
+ description GATEWAY-GUEST-MU
+ encapsulation dot1Q 92
+ ip address 10.0.92.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/1.96
+ description MANAGEMENT
+ encapsulation dot1Q 96
+!         
+interface GigabitEthernet0/1.98
+ description GATEWAY-PRINTER-MU
+ encapsulation dot1Q 98
+ ip address 10.0.98.254 255.255.255.0
+ ip access-group ZERO-TRUST in
+ ip helper-address 10.1.8.1
+!         
+interface GigabitEthernet0/2
+ no ip address
+ shutdown 
+ duplex auto
+ speed auto
+ media-type rj45
+!         
+interface GigabitEthernet0/3
+ no ip address
+ shutdown 
+ duplex auto
+ speed auto
+ media-type rj45
+!         
+ip forward-protocol nd
+!         
+!         
+no ip http server
+no ip http secure-server
+ip route 0.0.0.0 0.0.0.0 10.0.96.254
+ip ssh version 2
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!         
+ip access-list extended ZERO-TRUST
+ permit udp any any eq bootps
+ permit udp any any eq bootpc
+ permit ip any host 10.1.4.1
+ permit ip any host 10.1.8.1
+ deny   ip 10.0.0.0 0.0.255.255 10.0.0.0 0.0.255.255
+ permit ip any any
+!         
+!         
+!         
+!         
+control-plane
+!         
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!         
+line con 0
+ exec-timeout 5 0
+ login local
+line aux 0
+line vty 0 4
+ exec-timeout 5 0
+ login local
+ transport input ssh
+!         
+no scheduler allocate
+!         
+end       
