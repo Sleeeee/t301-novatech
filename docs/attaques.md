@@ -1,11 +1,4 @@
-# Documentation des Tests de Sécurité Réseau - NovaTech
-
-**Date des tests :** 11 décembre 2025  
-
-**Testeur :** Groupe N°9 dans le cadre du projet Novatech 
-
-**Équipements testés :** SL2-PU-01, SL2-PU-02
-
+# Attaques réalisées sur l'infrastructure, et mitigations implémentées
 ---
 
 ## 1. Topologie de Test

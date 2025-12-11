@@ -14,12 +14,13 @@ Voici les plages actuellement attribuées :
 
 ## Séparation en zones
 
-Les différents sites peuvent également être amenés à être séparés en zones. Afin d'afficher au mieux cette séparation, nous avons attribué un /16 à chacune des zones. Cela nous permet de créer jusqu'à 16 zones par site (ce qui est peu probable, mais il est toujours intéressant de laisser de la marge plutôt que de devoir tout recommencer). Chaque zone dispose d'une plage suffisamment large pour attribuer 256 /24. Dans la mesure du possible, chaque zone récupérera un sous-réseau dont le troisième byte est équivalent à celui de ses homologues sur les autres sites. Comme nos conventions le veulent, nous attribuons la dernière plage disponible aux systèmes d'interconnexion.
+Les différents sites peuvent également être amenés à être séparés en zones. Afin d'afficher au mieux cette séparation, nous avons attribué un /16 à chacune des zones. Cela nous permet de créer jusqu'à 16 zones par site (ce qui est peu probable, mais il est toujours intéressant de laisser de la marge plutôt que de devoir tout recommencer). Chaque zone dispose d'une plage suffisamment large pour attribuer 256 /24. Dans la mesure du possible, chaque zone récupérera un sous-réseau dont le troisième byte est équivalent à celui de ses homologues sur les autres sites. Comme nos conventions le veulent, nous attribuons la dernière plage disponible aux systèmes d'interconnexion. Nous avons également mis en place un VPN client-to-site, reliant à la maison mère, permettant à une partie des employés de travailler à distance.
 
 Voici les plages actuellement attribuées : 
 - M - User Zone (U) : 10.0.0.0/16
 - M - Trusted Zone (T) : 10.1.0.0/16
 - M - DMZ (D) : 10.2.0.0/16
+- M - VPN : 10.8.0.0/16
 - M - Interconnexion (I) : 10.15.0.0/16
 - P - User Zone (U) : 10.16.0.0/16
 - P - Interconnexion (I) : 10.31.0.0/16
@@ -51,6 +52,10 @@ La User Zone contient un nombre assez important de VLANs. Nous comptions initial
 - MGM-MU - VLAN 96 : 10.0.96.0/24 (VLAN de gestion des équipements réseau)
 - VLAN 99 natif : 10.0.99.0/24
 
+- Les VLANs métiers (ADMIN, IT, RD, MARKET, GUEST) récupèrent toutes leurs adresses par DHCP (range entre 100 et 200).
+- Les VLANs IOT (ALARME, CAMERA, PRINTER) se voient assigner des adresses IPv4 statiques.
+- La LAN de management (MGM) est configurée avec des adresses IPv4 statiques.
+
 ### Maison mère - Trusted Zone
 
 La Trusted Zone contient également plusieurs VLANs, mais un nombre moins important que pour les User Zones. La VLAN de management a été assignée avec un tag reflétant son homologue en User Zone. Voici les différents réseaux attribués :
@@ -77,6 +82,15 @@ La DMZ se base sur les mêmes principes d'adressage que pour la Trusted Zone. Vo
 - DNS-MD - VLAN 212 : 10.2.12.0/24 (DNS public uniquement)
 - WEB-MD - VLAN 216 : 10.2.16.0/24 (serveurs web uniquement, pas d'API/DB)
 
+### Maison mère - VPN client-to-site
+
+Les employés travaillant à distance grâce au VPN client-to-site disposent d'accès similaires à leur VLAN habituelle, d'où le troisième byte identique :
+
+- ADMIN-MV : 10.8.4.0/24
+- IT-MV : 10.8.8.0/24
+- RD-MV : 10.8.12.0/24
+- MARKET-MV : 10.8.16.0/24
+
 ### Site de production - Interconnexion
 
 Cette zone d'interconnexion a suivi les mêmes pratiques que pour la maison mère. Voici l'attribution des différents sous-réseaux : 
@@ -98,3 +112,7 @@ La User Zone du second site a suivi la même convention que la maison mère, c'e
 - PRINTER-PU - VLAN 1688 : 10.16.88.0/24
 - MGM-PU - VLAN 1696 : 10.16.96.0/24
 - VLAN 1699 natif : 10.16.99.0/24
+
+- Les VLANs métiers (ADMIN, IT, RD, PROD, LOGI, GUEST) récupèrent toutes leurs adresses par DHCP (range entre 100 et 200).
+- Les VLANs IOT (ASM, ALARME, CAMERA, PRINTER) se voient assigner des adresses IPv4 statiques.
+- La LAN de management (MGM) est configurée avec des adresses statiques.
