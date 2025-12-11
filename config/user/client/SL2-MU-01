@@ -1,0 +1,214 @@
+Current configuration : 5177 bytes
+!
+! Last configuration change at 22:38:43 UTC Thu Dec 11 2025
+!
+version 15.2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+service password-encryption
+service compress-config
+!
+hostname SL2-MU-01
+!
+boot-start-marker
+boot-end-marker
+!
+!
+enable secret 5 $1$QqGm$s80nxWNO2XTH1QlwwWESW1
+!
+username cisco privilege 15 secret 5 $1$Xvqf$N6LIqVbzk6xBaNSVMwblC0
+no aaa new-model
+!
+!
+!         
+!         
+!         
+ip arp inspection vlan 4,8,12,16,80,84,92,96,98
+ip arp inspection filter STATIC_FIX_ADMIN vlan  4
+!         
+!         
+!         
+ip dhcp snooping vlan 4,8,12,16,80,84,92,96,98
+ip dhcp snooping
+ip domain-name mere.novatech.lab
+ip cef    
+no ipv6 cef
+!         
+!         
+!         
+spanning-tree mode pvst
+spanning-tree extend system-id
+!         
+no cdp run
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+!         
+interface GigabitEthernet0/0
+ description UPLINK-CSW
+ switchport trunk allowed vlan 4,8,12,16,80,84,92,96,98,99
+ switchport trunk encapsulation dot1q
+ switchport trunk native vlan 99
+ switchport mode trunk
+ switchport nonegotiate
+ ip arp inspection trust
+ negotiation auto
+ ip dhcp snooping trust
+!         
+interface GigabitEthernet0/1
+ negotiation auto
+!         
+interface GigabitEthernet0/2
+ negotiation auto
+!         
+interface GigabitEthernet0/3
+ negotiation auto
+!         
+interface GigabitEthernet1/0
+ description RD-MU
+ switchport access vlan 12
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+ spanning-tree bpduguard enable
+!         
+interface GigabitEthernet1/1
+ description IT-MU
+ switchport access vlan 8
+ switchport mode access
+ switchport nonegotiate
+ negotiation auto
+ spanning-tree portfast edge
+!         
+interface GigabitEthernet1/2
+ description MARKET-MU
+ switchport access vlan 16
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+!         
+interface GigabitEthernet1/3
+ description CAMERA-MU
+ switchport access vlan 84
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+!         
+interface GigabitEthernet2/0
+ description PRINTER-MU
+ switchport access vlan 98
+ switchport mode access
+ switchport nonegotiate
+ negotiation auto
+!         
+interface GigabitEthernet2/1
+ description ALARME-MU
+ switchport access vlan 80
+ switchport mode access
+ switchport nonegotiate
+ negotiation auto
+!         
+interface GigabitEthernet2/2
+ description GUEST-MU
+ switchport access vlan 92
+ switchport mode access
+ switchport nonegotiate
+ negotiation auto
+!         
+interface GigabitEthernet2/3
+ description ADMIN-MU
+ switchport access vlan 4
+ switchport mode access
+ switchport nonegotiate
+ switchport port-security
+ negotiation auto
+ spanning-tree portfast edge
+!         
+interface GigabitEthernet3/0
+ negotiation auto
+!         
+interface GigabitEthernet3/1
+ negotiation auto
+!         
+interface GigabitEthernet3/2
+ negotiation auto
+!         
+interface GigabitEthernet3/3
+ negotiation auto
+!         
+interface Vlan96
+ description MANAGEMENT
+ ip address 10.0.96.219 255.255.255.0
+!         
+ip default-gateway 10.0.96.254
+ip forward-protocol nd
+!         
+ip http server
+!         
+ip ssh version 2
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!         
+!         
+!         
+arp access-list STATIC_FIX_ADMIN
+ permit ip host 10.0.4.10 mac host 0242.7533.1200 
+!         
+!         
+!         
+!         
+control-plane
+!         
+banner exec ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner incoming ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+banner login ^C
+**************************************************************************
+* IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+* education. IOSv is provided as-is and is not supported by Cisco's      *
+* Technical Advisory Center. Any use or disclosure, in whole or in part, *
+* of the IOSv Software or Documentation to any third party for any       *
+* purposes is expressly prohibited except as otherwise authorized by     *
+* Cisco in writing.                                                      *
+**************************************************************************^C
+!         
+line con 0
+ logging synchronous
+ login local
+line aux 0
+line vty 0 4
+ login local
+ transport input ssh
+!         
+!         
+end       
