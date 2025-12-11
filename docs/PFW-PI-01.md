@@ -1,113 +1,428 @@
-# Documentation Firewall
+# Documentation des Règles Firewall pfSense - NovaTech Production
 
-## ADMIN-PU
-
-### Objets / Alias utilisés
-* **DCMT** (Network) : `10.1.8.0/24` (Contrôleurs de Domaine Maison Mère)
-* **JMPMT** (Network) : `10.1.4.0/24` (Serveur de Rebond)
-* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` (Ensemble des réseaux privés)
-* **SSH_RDP** (Ports) : `22`, `3389` (Administration distante)
-
-### Synthèse des flux autorisés
-
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description & Justification |
-| :--- | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
-| **1** | 1 | `PASS` | TCP/UDP | `ADMINPU subnets` | **! RFC1918_Private** | * (Any) | **Accès Internet** : Autorise l'accès vers le WAN uniquement. L'inversion (`!`) sur l'alias privé garantit qu'aucun trafic ne peut fuiter vers d'autres réseaux internes via cette règle. |
-| **2** | 2 | `PASS` | TCP | `ADMINPU subnets` | **JMPMT** | **SSH_RDP** | **Administration Centralisée** : Accès au Jump Server en SSH ou RDP pour l'administration des serveurs. |
-| **3** | 3 | `PASS` | TCP/UDP | `ADMINPU subnets` | **DCMT** | 53 (DNS) | **Infra DNS** : Résolution de noms via les contrôleurs de domaine de la Maison Mère. |
-| **4** | 4 | `BLOCK` | Any | * | * | * | **Règle de Clôture** : Bloque explicitement tout autre trafic pour assurer la segmentation stricte. |
-
-## ALARMES-PU
-
-### Politique de Sécurité
-Ce réseau héberge les centrales d'intrusion et de détection incendie.
-Il est configuré avec une politique d'**isolation stricte**. Aucune remontée d'alerte directe vers le serveur de supervision n'est autorisée. Les flux sont limités exclusivement à l'envoi de logs vers le serveur d'administration (Jump Server).
-
-### Objets / Alias utilisés
-* **JMPMT** (Network) : `10.1.4.0/24` (Serveur de Rebond / Bastion)
-
-### Synthèse des flux autorisés
-
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description & Justification |
-| :--- | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
-| **1** | 1 | `PASS` | TCP | `ALARMESPU subnets` | **JMPMT** | 22 (SSH) | **Envoi de logs** : Seule communication sortante autorisée. Permet aux équipements d'envoyer leurs journaux ou fichiers de maintenance vers le Jump Server. |
-| **2** | 2 | `BLOCK` | Any | * | * | * | **Isolement Total** : Bloque tout autre trafic (Internet, Supervision, accès latéral). Empêche les équipements d'alarme de communiquer avec l'extérieur ou le reste du réseau. |
-
-### Note
-L'administration des alarmes reste possible à l'initiative du **Jump Server** (flux entrant), grâce au mécanisme de suivi d'état (*Stateful Inspection*) du pare-feu.
-
-## ASM-PU, CAMERAS-PU, PRINTER-PU
-
-### Politique de Sécurité
-Ces réseaux sont considérés comme des zones **passives et isolées**. Ils ne doivent initier qu'un seul flux : l'envoi de logs vers le serveur d'administration central (Jump Server). Tout autre trafic (y compris Internet) est strictement interdit.
-
-### Objets / Alias utilisés
-* **JMPMT** (Network) : `10.1.4.0/24` (Serveur de Rebond / Bastion)
+**Date de création :** 11 décembre 2025  
+**Version :** 1.0  
+**Environnement :** Production - Site PU (Production Unit)  
+**Firewall :** pfSense
 
 ---
 
-### Synthèse des flux autorisés (Identique pour les 3 VLANs)
+## Vue d'ensemble de l'infrastructure
 
+### Objectifs de sécurité
+- Segmentation réseau stricte par fonction métier
+- Principe du moindre privilège (Least Privilege)
+- Isolation des réseaux critiques (SCADA, Caméras, Alarmes)
+- Protection contre les menaces Layer 2 (DHCP Snooping, DAI)
+- Contrôle d'accès granulaire entre VLANs
 
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description & Justification |
-| :--- | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
-| **1** | 1 | `PASS` | TCP | `VLAN subnets` | **JMPMT** | 22 (SSH) | **Envoi de Logs** : Autorise la communication sortante vers le Jump Server pour l'envoi de journaux de sécurité et de maintenance. |
-| **2** | 2 | `BLOCK` | Any | * | * | * | **Règle de Clôture** : Bloque tout autre trafic (Internet, accès latéral, Supervision). |
+### Équipements
+- **Firewall :** pfSense (passerelle et routage inter-VLAN)
+- **Switches L2 :** 
+  - SL2-PU-01 (10.16.96.219)
+  - SL2-PU-02 (10.16.96.218)
 
+---
 
+## Architecture réseau
 
-## RD-PU
+```
+Internet
+   |
+[pfSense Firewall]
+   |
+   +--- VLAN 1604 (ADMIN-PU)      - 10.16.4.0/24
+   +--- VLAN 1608 (IT-PU)         - 10.16.8.0/24
+   +--- VLAN 1612 (RD-PU)         - 10.16.12.0/24
+   +--- VLAN 1620 (PROD-PU)       - 10.16.20.0/24
+   +--- VLAN 1624 (LOGI-PU)       - 10.16.24.0/24
+   +--- VLAN 1676 (ASM-PU)        - 10.16.76.0/24
+   +--- VLAN 1680 (ALARMES-PU)    - 10.16.80.0/24
+   +--- VLAN 1684 (CAMERAS-PU)    - 10.16.84.0/24
+   +--- VLAN 1688 (PRINTER-PU)    - 10.16.88.0/24
+   +--- VLAN 1696 (MGM-PU)        - 10.16.96.0/24
+```
 
-### Objets / Alias utilisés
-* **DCMT** (Network) : `10.1.8.0/24` (Contrôleurs de Domaine)
-* **APPMT** (Network) : `10.1.12.0/24` (Serveurs Applicatifs / Recette)
-* **RFC1918_Private** (Network) : Ensemble des réseaux privés (10.x.x.x, 172.16.x.x, 192.168.x.x)
-* **AD_Auth_Ports** (Ports) : `88`, `389`, `445` (Kerberos, LDAP, SMB)
+---
 
-### Synthèse des flux autorisés
+## VLANs configurés
 
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description & Justification |
-| :--- | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
-| **1** | 1 | `PASS` | TCP/UDP | `RDPU subnets` | **DCMT** | 53 (DNS) | **Résolution DNS** : Indispensable pour la navigation et la résolution des noms de serveurs. |
-| **2** | 2 | `PASS` | TCP | `RDPU subnets` | **DCMT** | **AD_Auth_Ports** | **Authentification** : Permet l'ouverture de session sur le domaine (Active Directory). |
-| **3** | 3 | `PASS` | TCP | `RDPU subnets` | **APPMT** | 443 (HTTPS) | **Accès Applicatif** : Accès aux interfaces web des environnements de recette et des applications métier. (Le port 22 (SSH/Git) est volontairement retiré). |
-| **4** | 4 | `PASS` | TCP/UDP | `RDPU subnets` | **! RFC1918_Private** | * (Any) | **Accès Internet** : Autorise l'accès WAN pour la documentation et les ressources externes. L'inversion (`!`) garantit l'interdiction d'accès aux autres réseaux internes. |
-| **5** | 5 | `BLOCK` | Any | * | * | * | **Règle de Clôture** : Bloque tout autre trafic. |
+| VLAN ID | Nom           | Réseau IP       | Passerelle   | Usage                          |
+|---------|---------------|-----------------|--------------|--------------------------------|
+| 1604    | ADMIN-PU      | 10.16.4.0/24    | 10.16.4.254  | Administration                 |
+| 1608    | IT-PU         | 10.16.8.0/24    | 10.16.8.254  | Équipe IT                      |
+| 1612    | RD-PU         | 10.16.12.0/24   | 10.16.12.254 | Recherche & Développement      |
+| 1620    | PROD-PU       | 10.16.20.0/24   | 10.16.20.254 | Production (SCADA/ICS)         |
+| 1624    | LOGI-PU       | 10.16.24.0/24   | 10.16.24.254 | Logistique                     |
+| 1676    | ASM-PU        | 10.16.76.0/24   | 10.16.76.254 | Assemblage                     |
+| 1680    | ALARMES-PU    | 10.16.80.0/24   | 10.16.80.254 | Systèmes d'alarme              |
+| 1684    | CAMERAS-PU    | 10.16.84.0/24   | 10.16.84.254 | Vidéosurveillance              |
+| 1688    | PRINTER-PU    | 10.16.88.0/24   | 10.16.88.254 | Imprimantes                    |
+| 1696    | MGM-PU        | 10.16.96.0/24   | 10.16.96.254 | Management (switches, équip.)  |
 
+---
 
-## PROD-PU
+## Politique de sécurité globale
 
-### Objets / Alias utilisés
-* **DCMT** (Network) : `10.1.8.0/24` (Contrôleurs de Domaine)
-* **APPMT** (Network) : `10.1.12.0/24` (Serveurs Applicatifs)
-* **AD_Auth_Port** (Ports) : `88`, `389`, `445` (Kerberos, LDAP, SMB)
+### Principe de base : **DENY ALL par défaut**
 
-### Synthèse des flux autorisés
+Chaque VLAN dispose de :
+1. **Règles explicites d'autorisation** pour les flux nécessaires
+2. **Règle de blocage finale** qui log tous les rejets
+3. **Pas de règle "allow any"** sauf cas exceptionnels (ADMIN, IT)
 
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description & Justification |
-| :--- | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
-| **1** | 1 | `PASS` | TCP/UDP | `PRODPU subnets` | **DCMT** | 53 (DNS) | **Résolution DNS** : Indispensable pour la résolution de noms interne (ERP). |
-| **2** | 2 | `PASS` | TCP | `PRODPU subnets` | **DCMT** | **AD_Auth_Port** | **Authentification** : Permet l'ouverture de session et l'authentification au domaine. |
-| **3** | 3 | `PASS` | TCP | `PRODPU subnets` | **APPMT** | 443 (HTTPS) | **Accès ERP/Métier** : Accès à l'application métier centrale. La règle assure l'interdiction d'accès direct à la base de données. |
-| **4** | 4 | `BLOCK` | Any | * | * | * | **Règle de Clôture** : Bloque tout autre trafic (Internet, Jump Server, autres VLANs, BDD) pour maintenir l'isolation de cette zone critique. |
+### Catégories de VLANs
 
-## IT-PU
+#### VLANs Administratifs
+- **ADMIN-PU (1604)** : Accès complet
+- **IT-PU (1608)** : Accès complet
 
-### Objets / Alias utilisés
-* **DCMT** (Network) : `10.1.8.0/24` (Contrôleurs de Domaine)
-* **JMPMT** (Network) : `10.1.4.0/24` (Serveur de Rebond)
-* **APPMT** (Network) : `10.1.12.0/24` (Serveurs Applicatifs)
-* **RFC1918_Private** (Network) : Ensemble des réseaux privés
-* **AD_Auth_Port** (Ports) : `88`, `389`, `445` (Authentification AD)
-* **SSH_RDP** (Ports) : `22`, `3389` (Administration distante)
+#### VLANs Métiers
+- **RD-PU (1612)** : Accès IT, Imprimantes, Internet
+- **LOGI-PU (1624)** : Accès Imprimantes, Assemblage, Internet
+- **ASM-PU (1676)** : Accès Production, Imprimantes, Internet
 
-### Synthèse des flux autorisés
+#### VLANs Critiques
+- **PROD-PU (1620)** : Isolation - IT uniquement
+- **ALARMES-PU (1680)** : Isolation - IT uniquement
+- **CAMERAS-PU (1684)** : Isolation - IT uniquement
 
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description & Justification |
-| :--- | :---: | :---: | :---: | :--- | :--- | :--- | :--- |
-| **1** | 1 | `PASS` | TCP/UDP | `ITPU subnets` | **DCMT** | 53 (DNS) | **Résolution DNS** : Indispensable pour la navigation et la résolution des ressources internes. |
-| **2** | 2 | `PASS` | TCP | `ITPU subnets` | **DCMT** | **AD_Auth_Port** | **Authentification** : Permet l'ouverture de session sur le domaine (Active Directory). |
-| **3** | 3 | `PASS` | TCP | `ITPU subnets` | **JMPMT** | **SSH_RDP** | **Administration/Support** : Accès au Jump Server pour la maintenance des serveurs. |
-| **4** | 4 | `PASS` | TCP | `ITPU subnets` | **APPMT** | 443 (HTTPS) | **Accès Applicatif** : Accès aux consoles web de supervision ou aux applications métier pour le support. |
-| **5** | 5 | `PASS` | TCP/UDP | `ITPU subnets` | **! RFC1918_Private** | * (Any) | **Accès Internet** : Autorise l'accès WAN pour la recherche de documentation, drivers et outils. |
-| **6** | 6 | `BLOCK** | Any | * | * | * | **Règle de Clôture** : Bloque tout autre trafic (y compris MGM-PU, BDD et autres VLANs de Production) pour respecter le principe de moindre privilège. |
+#### VLANs Services
+- **PRINTER-PU (1688)** : Mode passif
+- **MGM-PU (1696)** : Management
+
+---
+
+## Règles firewall par VLAN
+
+### VLAN 1604 - ADMIN-PU
+
+#### Objets / Alias utilisés
+* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `ADMIN-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
+| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+
+---
+
+### VLAN 1608 - IT-PU
+
+#### Objets / Alias utilisés
+* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `IT-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
+| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+
+---
+
+### VLAN 1612 - RD-PU
+
+#### Objets / Alias utilisés
+* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `RD-PU subnets` | `IT-PU subnets` | * (Any) | Accès support IT |
+| **2** | 2 | `PASS` | TCP | `RD-PU subnets` | `PRINTER-PU subnets` | 9100, 515 | Impression |
+| **3** | 3 | `PASS` | TCP/UDP | `RD-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
+| **4** | 4 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+
+---
+
+### VLAN 1620 - PROD-PU
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `PROD-PU subnets` | `IT-PU subnets` | * (Any) | Support IT uniquement |
+| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+
+---
+
+### VLAN 1624 - LOGI-PU
+
+#### Objets / Alias utilisés
+* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `LOGI-PU subnets` | `IT-PU subnets` | * (Any) | Support IT |
+| **2** | 2 | `PASS` | TCP/UDP | `LOGI-PU subnets` | `ASM-PU subnets` | * (Any) | Coordination assemblage |
+| **3** | 3 | `PASS` | TCP | `LOGI-PU subnets` | `PRINTER-PU subnets` | 9100, 515 | Impression |
+| **4** | 4 | `PASS` | TCP/UDP | `LOGI-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
+| **5** | 5 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+
+---
+
+### VLAN 1676 - ASM-PU
+
+#### Objets / Alias utilisés
+* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `ASM-PU subnets` | `IT-PU subnets` | * (Any) | Support IT |
+| **2** | 2 | `PASS` | TCP/UDP | `ASM-PU subnets` | `PROD-PU subnets` | * (Any) | Accès systèmes production |
+| **3** | 3 | `PASS` | TCP | `ASM-PU subnets` | `PRINTER-PU subnets` | 9100, 515 | Impression |
+| **4** | 4 | `PASS` | TCP/UDP | `ASM-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
+| **5** | 5 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+
+---
+
+### VLAN 1680 - ALARMES-PU
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `ALARMES-PU subnets` | `IT-PU subnets` | * (Any) | Maintenance IT uniquement |
+| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+
+---
+
+### VLAN 1684 - CAMERAS-PU
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `CAMERAS-PU subnets` | `IT-PU subnets` | * (Any) | Maintenance IT uniquement |
+| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+
+---
+
+### VLAN 1688 - PRINTER-PU
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `PRINTER-PU subnets` | `IT-PU subnets` | * (Any) | Maintenance IT |
+| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+
+---
+
+### VLAN 1696 - MGM-PU
+
+#### Objets / Alias utilisés
+* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP/UDP | `MGM-PU subnets` | `IT-PU subnets` | * (Any) | Support IT |
+| **2** | 2 | `PASS` | TCP/UDP | `MGM-PU subnets` | **! RFC1918_Private** | 53 (DNS) | Résolution DNS |
+| **3** | 3 | `PASS` | TCP | `MGM-PU subnets` | **! RFC1918_Private** | 80, 443 | Mises à jour firmware |
+| **4** | 4 | `PASS` | UDP | `MGM-PU subnets` | **! RFC1918_Private** | 123 (NTP) | Synchronisation temps |
+| **5** | 5 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+
+---
+
+## Services DHCP
+
+### Configuration DHCP par VLAN
+
+Chaque VLAN dispose de son propre serveur DHCP configuré sur pfSense :
+
+| VLAN | Réseau          | Plage DHCP         | Passerelle   | DNS           |
+|------|-----------------|-------------------|--------------|---------------|
+| 1604 | 10.16.4.0/24    | 10.16.4.100-200   | 10.16.4.254  | 10.16.4.254   |
+| 1608 | 10.16.8.0/24    | 10.16.8.100-200   | 10.16.8.254  | 10.16.8.254   |
+| 1612 | 10.16.12.0/24   | 10.16.12.100-200  | 10.16.12.254 | 10.16.12.254  |
+| 1620 | 10.16.20.0/24   | 10.16.20.100-200  | 10.16.20.254 | 10.16.20.254  |
+| 1624 | 10.16.24.0/24   | 10.16.24.100-200  | 10.16.24.254 | 10.16.24.254  |
+| 1676 | 10.16.76.0/24   | 10.16.76.100-200  | 10.16.76.254 | 10.16.76.254  |
+| 1680 | 10.16.80.0/24   | 10.16.80.100-200  | 10.16.80.254 | 10.16.80.254  |
+| 1684 | 10.16.84.0/24   | 10.16.84.100-200  | 10.16.84.254 | 10.16.84.254  |
+| 1688 | 10.16.88.0/24   | 10.16.88.100-200  | 10.16.88.254 | 10.16.88.254  |
+| 1696 | 10.16.96.0/24   | 10.16.96.100-200  | 10.16.96.254 | 10.16.96.254  |
+
+**Durée de bail :** 86400 secondes (24 heures)
+
+### Réservations statiques
+
+#### VLAN 1604 (ADMIN-PU)
+- **10.16.4.10** - Tap Management pfSense (MAC: 02:42:7b:d0:0f:00)
+
+#### VLAN 1696 (MGM-PU)
+- **10.16.96.218** - SL2-PU-02
+- **10.16.96.219** - SL2-PU-01
+
+---
+
+### Flux autorisés détaillés
+
+#### Depuis RD-PU
+- → IT-PU : Complet
+- → PRINTER-PU : TCP 9100, 515
+- → Internet : TCP/UDP Any
+
+#### Depuis PROD-PU
+- → IT-PU : Complet
+
+#### Depuis LOGI-PU
+- → IT-PU : Complet
+- → ASM-PU : Complet
+- → PRINTER-PU : TCP 9100, 515
+- → Internet : TCP/UDP Any
+
+#### Depuis ASM-PU
+- → IT-PU : Complet
+- → PROD-PU : Complet
+- → PRINTER-PU : TCP 9100, 515
+- → Internet : TCP/UDP Any
+
+#### Depuis ALARMES-PU
+- → IT-PU : Complet
+
+#### Depuis CAMERAS-PU
+- → IT-PU : Complet
+
+#### Depuis PRINTER-PU
+- → IT-PU : Complet
+
+#### Depuis MGM-PU
+- → IT-PU : Complet
+- → Internet : DNS, NTP, HTTPS
+
+---
+
+## Bonnes pratiques appliquées
+
+### 1. Segmentation réseau
+- 10 VLANs distincts par fonction métier
+- Isolation des systèmes critiques
+- Séparation des flux de données sensibles
+
+### 2. Principe du moindre privilège
+- Accès uniquement aux ressources nécessaires
+- Règles par défaut = DENY ALL
+- Autorisations explicites uniquement
+
+### 3. Défense en profondeur
+- Firewall pfSense (Layer 3/4)
+- DHCP Snooping sur switches (Layer 2)
+- Dynamic ARP Inspection (Layer 2)
+- Port Security sur interfaces access
+
+### 4. Isolation des systèmes critiques
+- PROD-PU : Isolation SCADA
+- ALARMES-PU : Isolation complète
+- CAMERAS-PU : Protection des flux vidéo
+
+### 5. Logging et traçabilité
+- Règles de blocage avec logging activé
+- Traçabilité des tentatives d'accès refusées
+- Audit des flux réseau possible
+
+### 6. Protection Layer 2
+- DHCP Snooping
+- Rate limiting : 5 pps sur interfaces access
+- Dynamic ARP Inspection
+- Trust ports uniquement sur uplinks firewall
+
+### 7. Hardening switches
+- CDP désactivé
+- Port Security activé
+- BPDU Guard sur ports access
+- Root Guard sur ports access
+- SSH v2 uniquement
+- Authentification locale
+
+### 8. Gestion sécurisée
+- VLAN Management dédié (1696)
+- Accès administration par IT/ADMIN uniquement
+- Pas de VLAN 1
+- Native VLAN trunk = 1699 (unused)
+
+---
+
+## Recommandations futures
+
+### Court terme (0-3 mois)
+1. **IDS/IPS** : Déployer Suricata sur pfSense pour détection d'intrusions
+2. **Monitoring** : Mettre en place un SIEM (Security Information and Event Management)
+3. **Sauvegardes** : Automatiser les backups de config pfSense et switches
+4. **Documentation** : Maintenir un inventaire des équipements par VLAN
+
+### Moyen terme (3-6 mois)
+1. **802.1X** : Authentification réseau (NAC) sur ports access
+2. **VPN** : Accès distant sécurisé pour IT/ADMIN
+3. **Pentest** : Test d'intrusion pour validation de la sécurité
+4. **Formation** : Sensibilisation sécurité pour les utilisateurs
+
+### Long terme (6-12 mois)
+1. **SOC** : Centre d'opérations de sécurité (interne ou externalisé)
+2. **Redondance** : Firewall pfSense en HA (High Availability)
+3. **Segmentation micro** : Micro-segmentation au niveau applicatif
+4. **Zero Trust** : Évolution vers une architecture Zero Trust
+
+---
+
+## Annexes
+
+### A. Ports communs
+
+| Port  | Protocole | Service                    |
+|-------|-----------|----------------------------|
+| 53    | TCP/UDP   | DNS                        |
+| 80    | TCP       | HTTP                       |
+| 443   | TCP       | HTTPS                      |
+| 123   | UDP       | NTP (synchronisation temps)|
+| 515   | TCP       | LPD (impression)           |
+| 9100  | TCP       | JetDirect (impression HP)  |
+| 22    | TCP       | SSH                        |
+
+### B. Commandes de vérification
+
+#### pfSense
+```bash
+# Vérifier les règles firewall
+pfctl -sr
+
+# Vérifier les états de connexion
+pfctl -ss
+
+# Vérifier les tables d'alias
+pfctl -t tablename -T show
+
+# Logs firewall en temps réel
+clog -f /var/log/filter.log
+```
+
+#### Switches Cisco
+```cisco
+! Vérifier DHCP Snooping
+show ip dhcp snooping
+show ip dhcp snooping binding
+
+! Vérifier ARP Inspection
+show ip arp inspection
+show ip arp inspection vlan <vlan-id>
+
+! Vérifier Port Security
+show port-security
+show port-security interface <interface>
+
+! Vérifier VLANs
+show vlan brief
+show interface trunk
+```
+
+### C. Contacts et escalades
+
+| Rôle                  | Contact                | Disponibilité |
+|-----------------------|------------------------|---------------|
+| Administrateur Réseau | admin@novatech.lab     | 24/7          |
+| Équipe IT             | it-support@novatech.lab| 8h-18h        |
+| Sécurité              | security@novatech.lab  | 24/7          |
+| Astreinte             | +33 X XX XX XX XX      | 24/7          |
+
+---
+
+## Changelog
+
+| Version | Date       | Auteur      | Modifications                           |
+|---------|------------|-------------|-----------------------------------------|
+| 1.0     | 2025-12-11 | Mister_DS   | Création initiale de la documentation   |
+
+---
+
+**Document confidentiel - Usage interne uniquement**  
+**© NovaTech - Infrastructure Production 2025**
