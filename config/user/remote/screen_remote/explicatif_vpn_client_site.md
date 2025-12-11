@@ -1,0 +1,1 @@
+Nous avons débuté l'implémentation du VPN Client-to-Site (OpenVPN). Bien que la configuration, la création des certificats (serveur et utilisateur) et l'export du fichier .ovpn soient réalisés, nous avons dû suspendre les tests et l'ajout des règles de sécurité. La finalisation du projet a été priorisée face aux contraintes de délais.
