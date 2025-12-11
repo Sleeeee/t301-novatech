@@ -1,12 +1,5 @@
 # Documentation des Règles Firewall pfSense - NovaTech Production
 
-**Date de création :** 11 décembre 2025  
-**Version :** 1.0  
-**Environnement :** Production - Site PU (Production Unit)  
-**Firewall :** pfSense
-
----
-
 ## Vue d'ensemble de l'infrastructure
 
 ### Objectifs de sécurité
