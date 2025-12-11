@@ -62,34 +62,35 @@ Internet
 
 ---
 
-## Politique de sécurité globale
+## Alias Firewall
 
-### Principe de base : **DENY ALL par défaut**
+### Alias IP (Réseaux)
 
-Chaque VLAN dispose de :
-1. **Règles explicites d'autorisation** pour les flux nécessaires
-2. **Règle de blocage finale** qui log tous les rejets
-3. **Pas de règle "allow any"** sauf cas exceptionnels (ADMIN, IT)
+| Nom | Type | Valeurs | Description |
+|:----|:----:|:--------|:------------|
+| **APPMT** | Network(s) | `10.1.12.0/24` | Accès app Mère |
+| **ASM_PU** | Network(s) | `10.16.76.0/24` | Chaîne assemblage |
+| **DCMT** | Network(s) | `10.1.8.0/24` | Domain Controller |
+| **DNS_MD** | Network(s) | `10.2.12.0/24` | DNS Public DMZ |
+| **ERP_CRM_MT** | Network(s) | `10.1.12.0/24`, `10.1.12` | Serveur ERP et CRM |
+| **JMPMT** | Network(s) | `10.1.4.0/24` | Jump Serveur Mère |
+| **NVR_MT** | Network(s) | `10.1.20.0/24` | Video Recorder |
+| **PROXY_MT** | Network(s) | `10.2.8.0/24` | Proxy Mère |
+| **RDS_MT** | Network(s) | `10.1.36.0/24` | Serveur RDS sensible |
+| **RFC1918_Private** | Network(s) | `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` | Accès internet |
+| **VLANS_Metier_Prod** | Network(s) | `10.16.4.0/24`, `10.16.8.0/24`, `10.16.12.0/24`, `10.16.20.0/24`, `10.16.24.0/24` | VLANs métier site de production |
+| **WEB_MD** | Network(s) | `10.2.16.0/24` | Serveur Web DMZ |
 
-### Catégories de VLANs
+### Alias Ports
 
-#### VLANs Administratifs
-- **ADMIN-PU (1604)** : Accès complet
-- **IT-PU (1608)** : Accès complet
-
-#### VLANs Métiers
-- **RD-PU (1612)** : Accès IT, Imprimantes, Internet
-- **LOGI-PU (1624)** : Accès Imprimantes, Assemblage, Internet
-- **ASM-PU (1676)** : Accès Production, Imprimantes, Internet
-
-#### VLANs Critiques
-- **PROD-PU (1620)** : Isolation - IT uniquement
-- **ALARMES-PU (1680)** : Isolation - IT uniquement
-- **CAMERAS-PU (1684)** : Isolation - IT uniquement
-
-#### VLANs Services
-- **PRINTER-PU (1688)** : Mode passif
-- **MGM-PU (1696)** : Management
+| Nom | Type | Valeurs | Description |
+|:----|:----:|:--------|:------------|
+| **AD_Auth_Port** | Port(s) | `88`, `389`, `445`, `636` | Port Pour l'AD |
+| **HTTP_Proxy** | Port(s) | `8888` | Port http Proxy |
+| **Impression** | Port(s) | `9100`, `515`, `631`, `445`, `139` | Port d'impression |
+| **Logs** | Port(s) | `514`, `162` | Pour les logs |
+| **SSH_RDP** | Port(s) | `22`, `3389` | Pour le SSH et RDP |
+| **RSTP** | Port(s) | `554` | Streaming video |
 
 ---
 
@@ -98,331 +99,199 @@ Chaque VLAN dispose de :
 ### VLAN 1604 - ADMIN-PU
 
 #### Objets / Alias utilisés
-* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+* **JMPMT** : Serveur Jump (probablement au HQ)
+* **SSH_RDP** : Ports SSH/RDP
+* **PROXY_MT** : Serveur Proxy
+* **HTTP_Proxy** : Port proxy HTTP
+* **DCMT** : Domain Controller (HQ)
+* **DNS_MD** : Serveur DNS secondaire
+* **ERP_CRM_MT** : Serveur ERP/CRM
+* **WEB_MD** : Serveur Web
+* **AD_Auth_Port** : Ports d'authentification Active Directory
 
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `ADMIN-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
-| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture |
-
----
-
-### VLAN 1608 - IT-PU
-
-#### Objets / Alias utilisés
-* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
-
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
-|:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `IT-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
-| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture |
-
----
-
-### VLAN 1612 - RD-PU
-
-#### Objets / Alias utilisés
-* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
-
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
-|:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `RD-PU subnets` | `IT-PU subnets` | * (Any) | Accès support IT |
-| **2** | 2 | `PASS` | TCP | `RD-PU subnets` | `PRINTER-PU subnets` | 9100, 515 | Impression |
-| **3** | 3 | `PASS` | TCP/UDP | `RD-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
-| **4** | 4 | `BLOCK` | Any | * | * | * | Règle de Clôture |
-
----
-
-### VLAN 1620 - PROD-PU
-
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
-|:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `PROD-PU subnets` | `IT-PU subnets` | * (Any) | Support IT uniquement |
-| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+| **1** | 1 | `PASS` | * | * | `ADMINPU Address` | 443, 80 | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `ADMINPU subnets` | `JMPMT` | SSH_RDP | SSH/RDP to JMP-MT |
+| **3** | 3 | `PASS` | TCP | `ADMINPU subnets` | `PROXY_MT` | HTTP_Proxy | Http vers Proxy |
+| **4** | 4 | `PASS` | TCP | `ADMINPU subnets` | `DCMT` | 53 (DNS) | DNS vers DC-MT |
+| **5** | 5 | `PASS` | TCP | `ADMINPU subnets` | `DNS_MD` | 53 (DNS) | DNS vers DNS-MD |
+| **6** | 6 | `PASS` | TCP | `ADMINPU subnets` | `ERP_CRM_MT` | 443 (HTTPS) | HTTPS vers ERP |
+| **7** | 7 | `PASS` | TCP | `ADMINPU subnets` | `WEB_MD` | 443 (HTTPS) | HTTPS vers Web-MD |
+| **8** | 8 | `PASS` | TCP/UDP | `ADMINPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
+| **9** | 9 | `PASS` | TCP | `JMPMT` | `ADMINPU subnets` | 3389 (MS RDP) | RDP du Jump vers Admin |
+| **10** | 10 | `BLOCK` | IPv4 * | `ADMINPU subnets` | * | * | Blocque tout le trafic d'admin |
+| **11** | 11 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
 ### VLAN 1624 - LOGI-PU
 
 #### Objets / Alias utilisés
-* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+* **PROXY_MT** : Serveur Proxy (HQ)
+* **HTTP_Proxy** : Port proxy HTTP
+* **DCMT** : Domain Controller (HQ)
+* **DNS_MD** : Serveur DNS secondaire
+* **ERP_CRM_MT** : Serveur ERP/CRM
+* **WEB_MD** : Serveur Web
+* **JMPMT** : Serveur Jump (HQ)
+* **AD_Auth_Port** : Ports d'authentification Active Directory
 
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `LOGI-PU subnets` | `IT-PU subnets` | * (Any) | Support IT |
-| **2** | 2 | `PASS` | TCP/UDP | `LOGI-PU subnets` | `ASM-PU subnets` | * (Any) | Coordination assemblage |
-| **3** | 3 | `PASS` | TCP | `LOGI-PU subnets` | `PRINTER-PU subnets` | 9100, 515 | Impression |
-| **4** | 4 | `PASS` | TCP/UDP | `LOGI-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
-| **5** | 5 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+| **1** | 1 | `PASS` | TCP | `LOGIPU address` | `LOGIPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `LOGIPU subnets` | `PROXY_MT` | HTTP_Proxy | Http vers Proxy |
+| **3** | 3 | `PASS` | TCP/UDP | `LOGIPU subnets` | `DCMT` | 53 (DNS) | DNS to DC-MT |
+| **4** | 4 | `PASS` | TCP/UDP | `LOGIPU subnets` | `DNS_MD` | 53 (DNS) | DNS vers DNS-MD |
+| **5** | 5 | `PASS` | TCP | `LOGIPU subnets` | `ERP_CRM_MT` | 443 (HTTPS) | HTTPS vers ERP |
+| **6** | 6 | `PASS` | TCP | `LOGIPU subnets` | `WEB_MD` | 443 (HTTPS) | HTTPS vers Web-MD |
+| **7** | 7 | `PASS` | TCP | `JMPMT` | `LOGIPU subnets` | 3389 (MS RDP) | RDP du Jump vers LOGIPU |
+| **8** | 8 | `PASS` | TCP/UDP | `LOGIPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
+| **9** | 9 | `BLOCK` | IPv4 * | `LOGIPU subnets` | * | * | Blocque tout le trafic de logi |
+| **10** | 10 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+
+---
+
+### VLAN 1612 - RD-PU
+
+#### Objets / Alias utilisés
+* **RDS_MT** : Serveur RDS (HQ)
+* **SSH_RDP** : Ports SSH/RDP
+* **PROXY_MT** : Serveur Proxy (HQ)
+* **HTTP_Proxy** : Port proxy HTTP
+* **DCMT** : Domain Controller (HQ)
+* **DNS_MD** : Serveur DNS secondaire
+* **ERP_CRM_MT** : Serveur ERP/CRM
+* **WEB_MD** : Serveur Web
+* **AD_Auth_Port** : Ports d'authentification Active Directory
+* **JMPMT** : Serveur Jump (HQ)
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP | `RDPU address` | `RDPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `RDPU subnets` | `RDS_MT` | SSH_RDP | SSH/RDP vers zone sensible |
+| **3** | 3 | `PASS` | TCP | `RDPU subnets` | `PROXY_MT` | HTTP_Proxy | Http vers Proxy |
+| **4** | 4 | `PASS` | TCP/UDP | `RDPU subnets` | `DCMT` | 53 (DNS) | DNS to DC-MT |
+| **5** | 5 | `PASS` | TCP/UDP | `RDPU subnets` | `DNS_MD` | 53 (DNS) | DNS vers DNS-MD |
+| **6** | 6 | `PASS` | TCP | `RDPU subnets` | `ERP_CRM_MT` | 443 (HTTPS) | HTTPS vers ERP |
+| **7** | 7 | `PASS` | TCP | `RDPU subnets` | `WEB_MD` | 443 (HTTPS) | HTTPS vers Web-MD |
+| **8** | 8 | `PASS` | TCP/UDP | `RDPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
+| **9** | 9 | `PASS` | TCP | `JMPMT` | `RDPU subnets` | SSH_RDP | RDP du Jump vers RDPU |
+| **10** | 10 | `BLOCK` | IPv4 * | `RDPU subnets` | * | * | Blocque tout le trafic de RD |
+| **11** | 11 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+
+---
+
+### VLAN 1620 - PROD-PU
+
+#### Objets / Alias utilisés
+* **ASM_PU** : Chaîne assemblage (10.16.76.0/24)
+* **PROXY_MT** : Serveur Proxy Mère (10.2.8.0/24)
+* **HTTP_Proxy** : Port 8888
+* **DCMT** : Domain Controller (10.1.8.0/24)
+* **DNS_MD** : DNS Public DMZ (10.2.12.0/24)
+* **ERP_CRM_MT** : Serveur ERP/CRM (10.1.12.0/24)
+* **WEB_MD** : Serveur Web DMZ (10.2.16.0/24)
+* **AD_Auth_Port** : Ports 88, 389, 445, 636
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP | `PRODPU address` | `PRODPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `PRODPU subnets` | `ASM_PU` | 80 (HTTP) | HTTP vers ASM |
+| **3** | 3 | `PASS` | TCP | `PRODPU subnets` | `PROXY_MT` | HTTP_Proxy | Http vers Proxy |
+| **4** | 4 | `PASS` | TCP/UDP | `PRODPU subnets` | `DCMT` | 53 (DNS) | DNS to DC-MT |
+| **5** | 5 | `PASS` | TCP/UDP | `PRODPU subnets` | `DNS_MD` | 53 (DNS) | DNS vers DNS-MD |
+| **6** | 6 | `PASS` | TCP | `PRODPU subnets` | `ERP_CRM_MT` | 443 (HTTPS) | HTTPS vers ERP |
+| **7** | 7 | `PASS` | TCP | `PRODPU subnets` | `WEB_MD` | 443 (HTTPS) | HTTPS vers Web-MD |
+| **8** | 8 | `PASS` | TCP/UDP | `PRODPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
+| **9** | 9 | `BLOCK` | IPv4 * | `PRODPU subnets` | * | * | Blocque tout le trafic de prod |
+| **10** | 10 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
 ### VLAN 1676 - ASM-PU
 
 #### Objets / Alias utilisés
-* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+* **JMPMT** : Jump Serveur Mère (10.1.4.0/24)
+* **PRODPU** : VLAN Production (10.16.20.0/24)
 
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `ASM-PU subnets` | `IT-PU subnets` | * (Any) | Support IT |
-| **2** | 2 | `PASS` | TCP/UDP | `ASM-PU subnets` | `PROD-PU subnets` | * (Any) | Accès systèmes production |
-| **3** | 3 | `PASS` | TCP | `ASM-PU subnets` | `PRINTER-PU subnets` | 9100, 515 | Impression |
-| **4** | 4 | `PASS` | TCP/UDP | `ASM-PU subnets` | **! RFC1918_Private** | * (Any) | Accès Internet |
-| **5** | 5 | `BLOCK` | Any | * | * | * | Règle de Clôture |
-
----
-
-### VLAN 1680 - ALARMES-PU
-
-| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
-|:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `ALARMES-PU subnets` | `IT-PU subnets` | * (Any) | Maintenance IT uniquement |
-| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+| **1** | 1 | `PASS` | TCP | `ASMPU address` | `ASMPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `JMPMT` | `ASMPU subnets` | 80 (HTTP) | http vers jump vers asm |
+| **3** | 3 | `PASS` | TCP | `PRODPU subnets` | `ASMPU subnets` | 80 (HTTP) | http de PROD-PU vers ASM |
+| **4** | 4 | `BLOCK` | IPv4 * | `ASMPU subnets` | * | * | Blocque tout le trafic d'asm |
+| **5** | 5 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
 ### VLAN 1684 - CAMERAS-PU
 
+#### Objets / Alias utilisés
+* **JMPMT** : Jump Serveur Mère (10.1.4.0/24)
+* **NVR_MT** : Video Recorder (10.1.20.0/24)
+
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `CAMERAS-PU subnets` | `IT-PU subnets` | * (Any) | Maintenance IT uniquement |
-| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+| **1** | 1 | `PASS` | TCP | `CAMERASPU address` | `CAMERASPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `JMPMT` | `CAMERASPU subnets` | 80 (HTTP) | http vers jump vers camera |
+| **3** | 3 | `PASS` | TCP/UDP | `CAMERASPU subnets` | `NVR_MT` | * | Camera vers NVR_MT |
+| **4** | 4 | `BLOCK` | IPv4 * | `CAMERASPU subnets` | * | * | Blocque tout le trafic de cameras |
+| **5** | 5 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+
+---
+
+### VLAN 1608 - IT-PU
+
+#### Objets / Alias utilisés
+* **DCMT** : Domain Controller (10.1.8.0/24)
+* **HTTP_Proxy** : Port 8888
+* **DNS_MD** : DNS Public DMZ (10.2.12.0/24)
+* **ERP_CRM_MT** : Serveur ERP/CRM (10.1.12.0/24)
+* **WEB_MD** : Serveur Web DMZ (10.2.16.0/24)
+* **AD_Auth_Port** : Ports 88, 389, 445, 636
+
+| ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
+|:---|:---:|:---:|:---:|:---|:---|:---|:---|
+| **1** | 1 | `PASS` | TCP | `ITPU address` | `ITPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `ITPU subnets` | `DCMT` | HTTP_Proxy | Http vers Proxy |
+| **3** | 3 | `PASS` | TCP/UDP | `ITPU subnets` | `DCMT` | 53 (DNS) | DNS to DC-MT |
+| **4** | 4 | `PASS` | TCP/UDP | `ITPU subnets` | `DNS_MD` | 53 (DNS) | DNS vers DNS-MD |
+| **5** | 5 | `PASS` | TCP | `ITPU subnets` | `ERP_CRM_MT` | 443 (HTTPS) | HTTPS vers ERP |
+| **6** | 6 | `PASS` | TCP | `ITPU subnets` | `WEB_MD` | 443 (HTTPS) | HTTPS vers Web-MD |
+| **7** | 7 | `PASS` | TCP/UDP | `ITPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
+| **8** | 8 | `BLOCK` | IPv4 * | `ITPU subnets` | * | * | Blocque tout le trafic d'it |
+| **9** | 9 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
 ### VLAN 1688 - PRINTER-PU
 
+#### Objets / Alias utilisés
+* **VLANS_Metier_Prod** : VLANs métier site de production (10.16.4.0/24, 10.16.8.0/24, 10.16.12.0/24, 10.16.20.0/24, 10.16.24.0/24)
+* **Impression** : Ports 9100, 515, 631, 445, 139
+
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `PRINTER-PU subnets` | `IT-PU subnets` | * (Any) | Maintenance IT |
-| **2** | 2 | `BLOCK` | Any | * | * | * | Règle de Clôture - Isolation stricte |
+| **1** | 1 | `PASS` | TCP | `PRINTERPU address` | `PRINTERPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `VLANS_Metier_Prod` | `PRINTERPU subnets` | Impression | accès printer du métiers |
+| **3** | 3 | `BLOCK` | IPv4 * | `PRINTERPU subnets` | * | * | Blocque tout le trafic de printer |
+| **4** | 4 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
-### VLAN 1696 - MGM-PU
+### VLAN 1680 - ALARMES-PU
 
 #### Objets / Alias utilisés
-* **RFC1918_Private** (Network) : `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+* **JMPMT** : Jump Serveur Mère (10.1.4.0/24)
 
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
-| **1** | 1 | `PASS` | TCP/UDP | `MGM-PU subnets` | `IT-PU subnets` | * (Any) | Support IT |
-| **2** | 2 | `PASS` | TCP/UDP | `MGM-PU subnets` | **! RFC1918_Private** | 53 (DNS) | Résolution DNS |
-| **3** | 3 | `PASS` | TCP | `MGM-PU subnets` | **! RFC1918_Private** | 80, 443 | Mises à jour firmware |
-| **4** | 4 | `PASS` | UDP | `MGM-PU subnets` | **! RFC1918_Private** | 123 (NTP) | Synchronisation temps |
-| **5** | 5 | `BLOCK` | Any | * | * | * | Règle de Clôture |
+| **1** | 1 | `PASS` | TCP | `ALARMESPU address` | `ALARMESPU address` | 443 (HTTPS) | Anti-Lockout Rule |
+| **2** | 2 | `PASS` | TCP | `JMPMT` | `ALARMESPU subnets` | 80 (HTTP) | http vers jump vers alarmes |
+| **3** | 3 | `BLOCK` | IPv4 * | `ALARMESPU subnets` | * | * | Blocque tout le trafic d'alarme |
+| **4** | 4 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
-## Services DHCP
 
-### Configuration DHCP par VLAN
-
-Chaque VLAN dispose de son propre serveur DHCP configuré sur pfSense :
-
-| VLAN | Réseau          | Plage DHCP         | Passerelle   | DNS           |
-|------|-----------------|-------------------|--------------|---------------|
-| 1604 | 10.16.4.0/24    | 10.16.4.100-200   | 10.16.4.254  | 10.16.4.254   |
-| 1608 | 10.16.8.0/24    | 10.16.8.100-200   | 10.16.8.254  | 10.16.8.254   |
-| 1612 | 10.16.12.0/24   | 10.16.12.100-200  | 10.16.12.254 | 10.16.12.254  |
-| 1620 | 10.16.20.0/24   | 10.16.20.100-200  | 10.16.20.254 | 10.16.20.254  |
-| 1624 | 10.16.24.0/24   | 10.16.24.100-200  | 10.16.24.254 | 10.16.24.254  |
-| 1676 | 10.16.76.0/24   | 10.16.76.100-200  | 10.16.76.254 | 10.16.76.254  |
-| 1680 | 10.16.80.0/24   | 10.16.80.100-200  | 10.16.80.254 | 10.16.80.254  |
-| 1684 | 10.16.84.0/24   | 10.16.84.100-200  | 10.16.84.254 | 10.16.84.254  |
-| 1688 | 10.16.88.0/24   | 10.16.88.100-200  | 10.16.88.254 | 10.16.88.254  |
-| 1696 | 10.16.96.0/24   | 10.16.96.100-200  | 10.16.96.254 | 10.16.96.254  |
-
-**Durée de bail :** 86400 secondes (24 heures)
-
-### Réservations statiques
-
-#### VLAN 1604 (ADMIN-PU)
-- **10.16.4.10** - Tap Management pfSense (MAC: 02:42:7b:d0:0f:00)
-
-#### VLAN 1696 (MGM-PU)
-- **10.16.96.218** - SL2-PU-02
-- **10.16.96.219** - SL2-PU-01
-
----
-
-### Flux autorisés détaillés
-
-#### Depuis RD-PU
-- → IT-PU : Complet
-- → PRINTER-PU : TCP 9100, 515
-- → Internet : TCP/UDP Any
-
-#### Depuis PROD-PU
-- → IT-PU : Complet
-
-#### Depuis LOGI-PU
-- → IT-PU : Complet
-- → ASM-PU : Complet
-- → PRINTER-PU : TCP 9100, 515
-- → Internet : TCP/UDP Any
-
-#### Depuis ASM-PU
-- → IT-PU : Complet
-- → PROD-PU : Complet
-- → PRINTER-PU : TCP 9100, 515
-- → Internet : TCP/UDP Any
-
-#### Depuis ALARMES-PU
-- → IT-PU : Complet
-
-#### Depuis CAMERAS-PU
-- → IT-PU : Complet
-
-#### Depuis PRINTER-PU
-- → IT-PU : Complet
-
-#### Depuis MGM-PU
-- → IT-PU : Complet
-- → Internet : DNS, NTP, HTTPS
-
----
-
-## Bonnes pratiques appliquées
-
-### 1. Segmentation réseau
-- 10 VLANs distincts par fonction métier
-- Isolation des systèmes critiques
-- Séparation des flux de données sensibles
-
-### 2. Principe du moindre privilège
-- Accès uniquement aux ressources nécessaires
-- Règles par défaut = DENY ALL
-- Autorisations explicites uniquement
-
-### 3. Défense en profondeur
-- Firewall pfSense (Layer 3/4)
-- DHCP Snooping sur switches (Layer 2)
-- Dynamic ARP Inspection (Layer 2)
-- Port Security sur interfaces access
-
-### 4. Isolation des systèmes critiques
-- PROD-PU : Isolation SCADA
-- ALARMES-PU : Isolation complète
-- CAMERAS-PU : Protection des flux vidéo
-
-### 5. Logging et traçabilité
-- Règles de blocage avec logging activé
-- Traçabilité des tentatives d'accès refusées
-- Audit des flux réseau possible
-
-### 6. Protection Layer 2
-- DHCP Snooping
-- Rate limiting : 5 pps sur interfaces access
-- Dynamic ARP Inspection
-- Trust ports uniquement sur uplinks firewall
-
-### 7. Hardening switches
-- CDP désactivé
-- Port Security activé
-- BPDU Guard sur ports access
-- Root Guard sur ports access
-- SSH v2 uniquement
-- Authentification locale
-
-### 8. Gestion sécurisée
-- VLAN Management dédié (1696)
-- Accès administration par IT/ADMIN uniquement
-- Pas de VLAN 1
-- Native VLAN trunk = 1699 (unused)
-
----
-
-## Recommandations futures
-
-### Court terme (0-3 mois)
-1. **IDS/IPS** : Déployer Suricata sur pfSense pour détection d'intrusions
-2. **Monitoring** : Mettre en place un SIEM (Security Information and Event Management)
-3. **Sauvegardes** : Automatiser les backups de config pfSense et switches
-4. **Documentation** : Maintenir un inventaire des équipements par VLAN
-
-### Moyen terme (3-6 mois)
-1. **802.1X** : Authentification réseau (NAC) sur ports access
-2. **VPN** : Accès distant sécurisé pour IT/ADMIN
-3. **Pentest** : Test d'intrusion pour validation de la sécurité
-4. **Formation** : Sensibilisation sécurité pour les utilisateurs
-
-### Long terme (6-12 mois)
-1. **SOC** : Centre d'opérations de sécurité (interne ou externalisé)
-2. **Redondance** : Firewall pfSense en HA (High Availability)
-3. **Segmentation micro** : Micro-segmentation au niveau applicatif
-4. **Zero Trust** : Évolution vers une architecture Zero Trust
-
----
-
-## Annexes
-
-### A. Ports communs
-
-| Port  | Protocole | Service                    |
-|-------|-----------|----------------------------|
-| 53    | TCP/UDP   | DNS                        |
-| 80    | TCP       | HTTP                       |
-| 443   | TCP       | HTTPS                      |
-| 123   | UDP       | NTP (synchronisation temps)|
-| 515   | TCP       | LPD (impression)           |
-| 9100  | TCP       | JetDirect (impression HP)  |
-| 22    | TCP       | SSH                        |
-
-### B. Commandes de vérification
-
-#### pfSense
-```bash
-# Vérifier les règles firewall
-pfctl -sr
-
-# Vérifier les états de connexion
-pfctl -ss
-
-# Vérifier les tables d'alias
-pfctl -t tablename -T show
-
-# Logs firewall en temps réel
-clog -f /var/log/filter.log
-```
-
-#### Switches Cisco
-```cisco
-! Vérifier DHCP Snooping
-show ip dhcp snooping
-show ip dhcp snooping binding
-
-! Vérifier ARP Inspection
-show ip arp inspection
-show ip arp inspection vlan <vlan-id>
-
-! Vérifier Port Security
-show port-security
-show port-security interface <interface>
-
-! Vérifier VLANs
-show vlan brief
-show interface trunk
-```
-
-### C. Contacts et escalades
-
-| Rôle                  | Contact                | Disponibilité |
-|-----------------------|------------------------|---------------|
-| Administrateur Réseau | admin@novatech.lab     | 24/7          |
-| Équipe IT             | it-support@novatech.lab| 8h-18h        |
-| Sécurité              | security@novatech.lab  | 24/7          |
-| Astreinte             | +33 X XX XX XX XX      | 24/7          |
-
----
-
-## Changelog
-
-| Version | Date       | Auteur      | Modifications                           |
-|---------|------------|-------------|-----------------------------------------|
-| 1.0     | 2025-12-11 | Mister_DS   | Création initiale de la documentation   |
-
----
-
-**Document confidentiel - Usage interne uniquement**  
-**© NovaTech - Infrastructure Production 2025**
