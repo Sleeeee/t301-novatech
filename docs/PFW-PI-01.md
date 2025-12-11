@@ -145,10 +145,9 @@ Internet
 | **4** | 4 | `PASS` | TCP/UDP | `LOGIPU subnets` | `DNS_MD` | 53 (DNS) | DNS vers DNS-MD |
 | **5** | 5 | `PASS` | TCP | `LOGIPU subnets` | `ERP_CRM_MT` | 443 (HTTPS) | HTTPS vers ERP |
 | **6** | 6 | `PASS` | TCP | `LOGIPU subnets` | `WEB_MD` | 443 (HTTPS) | HTTPS vers Web-MD |
-| **7** | 7 | `PASS` | TCP | `JMPMT` | `LOGIPU subnets` | 3389 (MS RDP) | RDP du Jump vers LOGIPU |
-| **8** | 8 | `PASS` | TCP/UDP | `LOGIPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
-| **9** | 9 | `BLOCK` | IPv4 * | `LOGIPU subnets` | * | * | Blocque tout le trafic de logi |
-| **10** | 10 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+| **7** | 7 | `PASS` | TCP/UDP | `LOGIPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
+| **8** | 8 | `BLOCK` | IPv4 * | `LOGIPU subnets` | * | * | Blocque tout le trafic de logi |
+| **9** | 9 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
@@ -176,9 +175,8 @@ Internet
 | **6** | 6 | `PASS` | TCP | `RDPU subnets` | `ERP_CRM_MT` | 443 (HTTPS) | HTTPS vers ERP |
 | **7** | 7 | `PASS` | TCP | `RDPU subnets` | `WEB_MD` | 443 (HTTPS) | HTTPS vers Web-MD |
 | **8** | 8 | `PASS` | TCP/UDP | `RDPU subnets` | `DCMT` | AD_Auth_Port | AD Service vers DC-MT |
-| **9** | 9 | `PASS` | TCP | `JMPMT` | `RDPU subnets` | SSH_RDP | RDP du Jump vers RDPU |
-| **10** | 10 | `BLOCK` | IPv4 * | `RDPU subnets` | * | * | Blocque tout le trafic de RD |
-| **11** | 11 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+| **9** | 9 | `BLOCK` | IPv4 * | `RDPU subnets` | * | * | Blocque tout le trafic de RD |
+| **10** | 10 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
@@ -218,10 +216,9 @@ Internet
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
 | **1** | 1 | `PASS` | TCP | `ASMPU address` | `ASMPU address` | 443 (HTTPS) | Anti-Lockout Rule |
-| **2** | 2 | `PASS` | TCP | `JMPMT` | `ASMPU subnets` | 80 (HTTP) | http vers jump vers asm |
-| **3** | 3 | `PASS` | TCP | `PRODPU subnets` | `ASMPU subnets` | 80 (HTTP) | http de PROD-PU vers ASM |
-| **4** | 4 | `BLOCK` | IPv4 * | `ASMPU subnets` | * | * | Blocque tout le trafic d'asm |
-| **5** | 5 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+| **2** | 2 | `PASS` | TCP | `PRODPU subnets` | `ASMPU subnets` | 80 (HTTP) | http de PROD-PU vers ASM |
+| **3** | 3 | `BLOCK` | IPv4 * | `ASMPU subnets` | * | * | Blocque tout le trafic d'asm |
+| **4** | 4 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
@@ -234,10 +231,9 @@ Internet
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
 | **1** | 1 | `PASS` | TCP | `CAMERASPU address` | `CAMERASPU address` | 443 (HTTPS) | Anti-Lockout Rule |
-| **2** | 2 | `PASS` | TCP | `JMPMT` | `CAMERASPU subnets` | 80 (HTTP) | http vers jump vers camera |
-| **3** | 3 | `PASS` | TCP/UDP | `CAMERASPU subnets` | `NVR_MT` | * | Camera vers NVR_MT |
-| **4** | 4 | `BLOCK` | IPv4 * | `CAMERASPU subnets` | * | * | Blocque tout le trafic de cameras |
-| **5** | 5 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+| **2** | 2 | `PASS` | TCP/UDP | `CAMERASPU subnets` | `NVR_MT` | * | Camera vers NVR_MT |
+| **3** | 3 | `BLOCK` | IPv4 * | `CAMERASPU subnets` | * | * | Blocque tout le trafic de cameras |
+| **4** | 4 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
@@ -288,9 +284,8 @@ Internet
 | ID | Ordre | Action | Protocole | Source | Destination | Port | Description |
 |:---|:---:|:---:|:---:|:---|:---|:---|:---|
 | **1** | 1 | `PASS` | TCP | `ALARMESPU address` | `ALARMESPU address` | 443 (HTTPS) | Anti-Lockout Rule |
-| **2** | 2 | `PASS` | TCP | `JMPMT` | `ALARMESPU subnets` | 80 (HTTP) | http vers jump vers alarmes |
-| **3** | 3 | `BLOCK` | IPv4 * | `ALARMESPU subnets` | * | * | Blocque tout le trafic d'alarme |
-| **4** | 4 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
+| **2** | 2 | `BLOCK` | IPv4 * | `ALARMESPU subnets` | * | * | Blocque tout le trafic d'alarme |
+| **3** | 3 | `BLOCK` | IPv6 * | * | * | * | Rejet IPv6 |
 
 ---
 
